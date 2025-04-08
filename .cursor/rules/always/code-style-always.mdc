@@ -1,0 +1,77 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# General Code Style Standards
+
+## Context
+- These rules apply to all code files in the project
+- Ensures consistent code style and maintainability
+- Promotes clean and readable code
+
+## Critical Rules
+- Indentation and Spacing:
+  - Use tabs for indentation
+  - Add space after keywords
+  - Add space before function parentheses
+  - Space infix operators
+  - Add space after commas
+- Naming Conventions:
+  - PascalCase: Components, Types, Interfaces
+  - camelCase: variables, functions, methods, props
+  - kebab-case: file names, directory names
+  - UPPERCASE: constants, env variables
+- Code Organization:
+  - One component per file
+  - Group related imports
+  - Limit line length to 80 characters
+  - Use trailing commas in multiline literals
+- Code Quality:
+  - Use strict equality (===)
+  - Eliminate unused variables
+  - Handle errors in callbacks
+  - Add proper documentation
+  - Write descriptive variable names
+
+## Examples
+
+<example>
+// Good - Proper spacing and naming
+import { useState } from 'react'
+
+const MAX_ITEMS = 10
+
+function UserProfile({ userId, isActive }) {
+  const [data, setData] = useState(null)
+  
+  const handleClick = async () => {
+    try {
+      const result = await fetchData()
+      setData(result)
+    } catch (error) {
+      console.error('Failed to fetch:', error)
+    }
+  }
+  
+  return (
+    <div className="user-profile">
+      {/* Component content */}
+    </div>
+  )
+}
+</example>
+
+<example type="invalid">
+// Bad - Poor spacing and naming
+import{useState}from'react'
+const maxitems=10
+function userprofile({userid,isactive}){
+const[data,setdata]=useState(null)
+const click=()=>{
+const result=fetchData()
+setdata(result)
+}
+return(<div className='UserProfile'>{/*content*/}</div>)
+}</example> 

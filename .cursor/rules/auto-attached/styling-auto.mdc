@@ -1,0 +1,79 @@
+---
+description: 
+globs: **/*.{tsx,jsx,css}
+alwaysApply: false
+---
+
+# Styling Standards with Tailwind CSS and DaisyUI
+
+## Context
+- Applies to all styling in the project
+- Combines Tailwind CSS utility-first approach with DaisyUI components
+- Ensures consistent and maintainable styling patterns
+
+## Critical Rules
+- Use Tailwind CSS utility classes directly in JSX/TSX
+- Utilize DaisyUI components for common UI patterns:
+  - Use semantic component classes (btn, card, etc.)
+  - Follow DaisyUI modifier patterns (btn-primary, etc.)
+- Follow responsive design patterns:
+  - Use mobile-first approach
+  - Apply responsive classes in ascending order (sm:, md:, lg:)
+- Maintain consistent spacing:
+  - Use Tailwind's spacing scale
+  - Follow 4px/0.25rem grid
+- Color usage:
+  - Use theme colors from tailwind.config.js
+  - Apply DaisyUI theme variables for consistency
+- Component organization:
+  - Group related utility classes
+  - Extract common patterns into components
+  - Use @apply in CSS only when necessary
+
+## Examples
+
+<example>
+// Good - Proper utility class organization
+function Button({ children }) {
+  return (
+    <button className="btn btn-primary
+      px-4 py-2
+      text-sm font-medium
+      hover:bg-primary-600
+      transition-colors">
+      {children}
+    </button>
+  );
+}
+
+// Good - Responsive design
+function Card() {
+  return (
+    <div className="p-4 md:p-6 lg:p-8
+      grid grid-cols-1 md:grid-cols-2
+      gap-4">
+      {/* content */}
+    </div>
+  );
+}
+</example>
+
+<example type="invalid">
+// Bad - Inconsistent spacing and non-semantic classes
+function BadButton() {
+  return (
+    <button className="padding-15 custom-blue-bg">
+      Click me
+    </button>
+  );
+}
+
+// Bad - Not using DaisyUI components
+function BadCard() {
+  return (
+    <div className="shadow rounded-lg p-4 bg-white">
+      {/* Should use DaisyUI card component */}
+    </div>
+  );
+}
+</example> 

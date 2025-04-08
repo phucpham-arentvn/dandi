@@ -1,0 +1,61 @@
+---
+description: 
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Next.js Development Standards
+
+## Context
+- These rules apply to all Next.js components and pages
+- Ensures consistent implementation of Next.js features and best practices
+- Focuses on App Router and Server Components paradigm
+
+## Critical Rules
+- Default to Server Components unless client interactivity is needed
+- Add 'use client' directive only when necessary:
+  - Event handlers
+  - Browser APIs
+  - State management
+  - Client-side-only libraries
+- Use Next.js built-in components:
+  - Image component for optimized images
+  - Link component for client-side navigation
+  - Script component for external scripts
+- Implement proper metadata management using Metadata API
+- Use proper data fetching patterns:
+  - Server Components for direct database queries
+  - Route Handlers for API endpoints
+  - Server Actions for form submissions
+- Implement proper loading and error states using Next.js conventions
+- Follow proper caching strategies using Next.js cache mechanisms
+
+## Examples
+
+<example>
+// Good - Server Component by default
+async function ProductList() {
+  const products = await fetchProducts()
+  return <div>{products.map(p => <ProductCard key={p.id} {...p} />)}</div>
+}
+
+// Good - Client Component when needed
+'use client'
+function InteractiveForm() {
+  const [state, setState] = useState()
+  return <form onSubmit={handleSubmit}>...</form>
+}
+</example>
+
+<example type="invalid">
+// Bad - Using client component unnecessarily
+'use client'
+function StaticContent() {
+  return <div>This could be a server component</div>
+}
+
+// Bad - Not using Next.js Image component
+function ProductImage() {
+  return <img src="/product.jpg" />
+}
+</example> 

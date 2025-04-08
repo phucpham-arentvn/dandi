@@ -1,0 +1,62 @@
+---
+description: 
+globs: **/*.{tsx,jsx}
+alwaysApply: false
+---
+
+# React Component Development Standards
+
+## Context
+- Applies to all React components in the project
+- Ensures consistent component architecture and patterns
+- Promotes maintainable and performant components
+
+## Critical Rules
+- Use functional components with TypeScript interfaces
+- Follow naming conventions:
+  - PascalCase for components
+  - camelCase for props, variables, and functions
+  - Prefix handlers with 'handle': handleClick, handleSubmit
+  - Prefix boolean props with verbs: isLoading, hasError
+- Extract reusable logic into custom hooks (prefix with 'use')
+- Implement proper cleanup in useEffect hooks
+- Use proper performance optimization:
+  - React.memo() for expensive renders
+  - useCallback for memoized functions
+  - useMemo for expensive computations
+- Implement proper prop types with TypeScript interfaces
+- Keep components focused and single-responsibility
+- Use proper error boundaries for error handling
+
+## Examples
+
+<example>
+// Good - Functional component with TypeScript
+interface UserProfileProps {
+  userId: string;
+  isLoading?: boolean;
+}
+
+function UserProfile({ userId, isLoading = false }: UserProfileProps) {
+  const { data } = useUserData(userId);
+  
+  if (isLoading) return <LoadingSpinner />;
+  return <div>{data.name}</div>;
+}
+</example>
+
+<example type="invalid">
+// Bad - Class component without types
+class UserProfile extends React.Component {
+  render() {
+    return <div>{this.props.name}</div>;
+  }
+}
+
+// Bad - No proper cleanup in useEffect
+function BadComponent() {
+  useEffect(() => {
+    const subscription = someAPI.subscribe();
+    // Missing cleanup
+  }, []);
+}</example> 
