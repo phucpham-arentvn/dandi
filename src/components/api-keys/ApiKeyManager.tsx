@@ -11,41 +11,48 @@ import {
   ClipboardDocumentIcon,
   CheckIcon,
   DocumentMagnifyingGlassIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import CreateApiKeyModal from "./CreateApiKeyModal";
 import EditApiKeyModal from "./EditApiKeyModal";
 import ViewApiKeyModal from "./ViewApiKeyModal";
 import {
-  selectApiKeys,
-  selectVisibleKeyIds,
-  selectCopiedKeyId,
-  createApiKey,
-  updateApiKey,
-  deleteApiKey,
-  toggleKeyVisibility,
-  setCopiedKeyId,
+  useGetApiKeysQuery,
+  useCreateApiKeyMutation,
+  useUpdateApiKeyMutation,
+  useDeleteApiKeyMutation,
   type ApiKey,
-} from "@/redux/features/apiKeys/apiKeysSlice";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+} from "@/redux/services/apiKeysApi";
 
 export default function ApiKeyManager() {
-  const dispatch = useAppDispatch();
-  const apiKeys = useAppSelector(selectApiKeys);
-  const visibleKeyIds = useAppSelector(selectVisibleKeyIds);
-  const copiedKeyId = useAppSelector(selectCopiedKeyId);
+  // RTK Query hooks
+  const { data: apiKeys = [], isLoading: isLoadingKeys } = useGetApiKeysQuery();
+  const [createApiKey, { isLoading: isCreating }] = useCreateApiKeyMutation();
+  const [updateApiKey, { isLoading: isUpdating }] = useUpdateApiKeyMutation();
+  const [deleteApiKey] = useDeleteApiKeyMutation();
 
+  // Local state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
   const [viewingKey, setViewingKey] = useState<ApiKey | null>(null);
   const [payAsYouGo, setPayAsYouGo] = useState(false);
+  const [visibleKeyIds, setVisibleKeyIds] = useState<string[]>([]);
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [copyingKeyId, setCopyingKeyId] = useState<string | null>(null);
+  const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
+  const [keyToDelete, setKeyToDelete] = useState<ApiKey | null>(null);
 
   const handleCreateKey = async (data: {
     name: string;
     type: "development" | "production";
     monthlyLimit?: number;
   }) => {
-    dispatch(createApiKey(data));
-    setShowCreateModal(false);
+    try {
+      await createApiKey(data);
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error("Failed to create API key:", error);
+    }
   };
 
   const handleSaveEdit = async (data: {
@@ -55,26 +62,43 @@ export default function ApiKeyManager() {
     monthlyLimit?: number;
     enablePiiRestrictions?: boolean;
   }) => {
-    dispatch(updateApiKey(data));
-    setEditingKey(null);
+    try {
+      await updateApiKey(data);
+      setEditingKey(null);
+    } catch (error) {
+      console.error("Failed to update API key:", error);
+    }
   };
 
   const handleDeleteKey = async (id: string) => {
-    dispatch(deleteApiKey(id));
+    try {
+      setDeletingKeyId(id);
+      await deleteApiKey(id);
+      setKeyToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete API key:", error);
+    } finally {
+      setDeletingKeyId(null);
+    }
   };
 
   const handleCopyKey = async (key: string, id: string) => {
     try {
+      setCopyingKeyId(id);
       await navigator.clipboard.writeText(key);
-      dispatch(setCopiedKeyId(id));
-      setTimeout(() => dispatch(setCopiedKeyId(null)), 2000);
+      setCopiedKeyId(id);
+      setTimeout(() => setCopiedKeyId(null), 2000);
     } catch (err) {
       console.error("Failed to copy:", err);
+    } finally {
+      setCopyingKeyId(null);
     }
   };
 
   const handleToggleKeyVisibility = (id: string) => {
-    dispatch(toggleKeyVisibility(id));
+    setVisibleKeyIds((prev) =>
+      prev.includes(id) ? prev.filter((keyId) => keyId !== id) : [...prev, id]
+    );
   };
 
   return (
@@ -171,14 +195,19 @@ export default function ApiKeyManager() {
           <button
             onClick={() => setShowCreateModal(true)}
             className="btn btn-primary"
+            disabled={isCreating}
           >
             <PlusIcon className="h-5 w-5 mr-2" />
-            Create API Key
+            {isCreating ? "Creating..." : "Create API Key"}
           </button>
         </div>
 
         <div className="bg-white rounded-lg shadow">
-          {apiKeys.length === 0 ? (
+          {isLoadingKeys ? (
+            <div className="text-center py-6">
+              <span className="loading loading-spinner loading-md"></span>
+            </div>
+          ) : apiKeys.length === 0 ? (
             <div className="text-center py-6">
               <p className="text-gray-500">
                 No API keys found. Create one to get started.
@@ -233,10 +262,13 @@ export default function ApiKeyManager() {
                           <button
                             onClick={() => handleCopyKey(key.key, key.id)}
                             className="btn btn-ghost btn-sm btn-square"
+                            disabled={copyingKeyId === key.id}
                             title="Copy key"
                           >
                             {copiedKeyId === key.id ? (
                               <CheckIcon className="h-4 w-4 text-success" />
+                            ) : copyingKeyId === key.id ? (
+                              <span className="loading loading-spinner loading-xs"></span>
                             ) : (
                               <ClipboardDocumentIcon className="h-4 w-4" />
                             )}
@@ -244,16 +276,26 @@ export default function ApiKeyManager() {
                           <button
                             onClick={() => setEditingKey(key)}
                             className="btn btn-ghost btn-sm btn-square"
+                            disabled={isUpdating}
                             title="Edit key"
                           >
-                            <PencilIcon className="h-4 w-4" />
+                            {isUpdating && editingKey?.id === key.id ? (
+                              <span className="loading loading-spinner loading-xs"></span>
+                            ) : (
+                              <PencilIcon className="h-4 w-4" />
+                            )}
                           </button>
                           <button
-                            onClick={() => handleDeleteKey(key.id)}
+                            onClick={() => setKeyToDelete(key)}
                             className="btn btn-ghost btn-sm btn-square"
+                            disabled={deletingKeyId === key.id}
                             title="Delete key"
                           >
-                            <TrashIcon className="h-4 w-4" />
+                            {deletingKeyId === key.id ? (
+                              <span className="loading loading-spinner loading-xs"></span>
+                            ) : (
+                              <TrashIcon className="h-4 w-4" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -265,6 +307,47 @@ export default function ApiKeyManager() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <dialog
+        id="delete_confirm_modal"
+        className={`modal ${keyToDelete ? "modal-open" : ""}`}
+      >
+        <div className="modal-box">
+          <div className="flex items-center gap-3 text-error">
+            <ExclamationTriangleIcon className="h-6 w-6" />
+            <h3 className="font-bold text-lg">Delete API Key</h3>
+          </div>
+
+          <p className="py-4">
+            Are you sure you want to delete the API key &ldquo;
+            {keyToDelete?.name}&rdquo;? This action cannot be undone.
+          </p>
+
+          <div className="modal-action">
+            <button className="btn" onClick={() => setKeyToDelete(null)}>
+              Cancel
+            </button>
+            <button
+              className="btn btn-error"
+              onClick={() => keyToDelete && handleDeleteKey(keyToDelete.id)}
+              disabled={!!deletingKeyId}
+            >
+              {deletingKeyId ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setKeyToDelete(null)}>close</button>
+        </form>
+      </dialog>
 
       {/* Contact Support */}
       <div className="flex justify-between items-center pt-4">

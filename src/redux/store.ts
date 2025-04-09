@@ -2,20 +2,24 @@ import { configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import { combineReducers } from "redux";
-import apiKeysReducer from "./features/apiKeys/apiKeysSlice";
+import { apiKeysApi } from "./services/apiKeysApi";
+import { rtkQueryErrorMiddleware } from "./middleware/errorMiddleware";
 
+// Define the root reducer
+const rootReducer = combineReducers({
+  [apiKeysApi.reducerPath]: apiKeysApi.reducer,
+});
+
+// Configure persist
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["apiKeys"], // Only persist apiKeys reducer
+  whitelist: [],
 };
-
-const rootReducer = combineReducers({
-  apiKeys: apiKeysReducer,
-});
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
+// Create store
 export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
@@ -23,11 +27,13 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
-    }),
+    })
+      .concat(apiKeysApi.middleware)
+      .concat(rtkQueryErrorMiddleware),
 });
 
 export const persistor = persistStore(store);
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
+// Export types
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
