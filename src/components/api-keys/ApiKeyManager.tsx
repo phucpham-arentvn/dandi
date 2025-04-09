@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   PlusIcon,
   TrashIcon,
@@ -23,13 +23,36 @@ import {
   useDeleteApiKeyMutation,
   type ApiKey,
 } from "@/redux/services/apiKeysApi";
+import toast from "react-hot-toast";
 
 export default function ApiKeyManager() {
   // RTK Query hooks
   const { data: apiKeys = [], isLoading: isLoadingKeys } = useGetApiKeysQuery();
-  const [createApiKey, { isLoading: isCreating }] = useCreateApiKeyMutation();
-  const [updateApiKey, { isLoading: isUpdating }] = useUpdateApiKeyMutation();
-  const [deleteApiKey] = useDeleteApiKeyMutation();
+  const [createApiKey, { isLoading: isCreating, isSuccess: isCreateSuccess }] =
+    useCreateApiKeyMutation();
+  const [updateApiKey, { isLoading: isUpdating, isSuccess: isUpdateSuccess }] =
+    useUpdateApiKeyMutation();
+  const [deleteApiKey, { isSuccess: isDeleteSuccess }] =
+    useDeleteApiKeyMutation();
+
+  // Add useEffect hooks for success toasts
+  useEffect(() => {
+    if (isCreateSuccess) {
+      toast.success("API key created successfully");
+    }
+  }, [isCreateSuccess]);
+
+  useEffect(() => {
+    if (isUpdateSuccess) {
+      toast.success("API key updated successfully");
+    }
+  }, [isUpdateSuccess]);
+
+  useEffect(() => {
+    if (isDeleteSuccess) {
+      toast.success("API key deleted successfully");
+    }
+  }, [isDeleteSuccess]);
 
   // Local state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -47,12 +70,8 @@ export default function ApiKeyManager() {
     type: "development" | "production";
     monthlyLimit?: number;
   }) => {
-    try {
-      await createApiKey(data);
-      setShowCreateModal(false);
-    } catch (error) {
-      console.error("Failed to create API key:", error);
-    }
+    await createApiKey(data);
+    setShowCreateModal(false);
   };
 
   const handleSaveEdit = async (data: {
@@ -62,24 +81,15 @@ export default function ApiKeyManager() {
     monthlyLimit?: number;
     enablePiiRestrictions?: boolean;
   }) => {
-    try {
-      await updateApiKey(data);
-      setEditingKey(null);
-    } catch (error) {
-      console.error("Failed to update API key:", error);
-    }
+    await updateApiKey(data);
+    setEditingKey(null);
   };
 
   const handleDeleteKey = async (id: string) => {
-    try {
-      setDeletingKeyId(id);
-      await deleteApiKey(id);
-      setKeyToDelete(null);
-    } catch (error) {
-      console.error("Failed to delete API key:", error);
-    } finally {
-      setDeletingKeyId(null);
-    }
+    setDeletingKeyId(id);
+    await deleteApiKey(id);
+    setKeyToDelete(null);
+    setDeletingKeyId(null);
   };
 
   const handleCopyKey = async (key: string, id: string) => {
@@ -87,9 +97,11 @@ export default function ApiKeyManager() {
       setCopyingKeyId(id);
       await navigator.clipboard.writeText(key);
       setCopiedKeyId(id);
+      toast.success("API key copied to clipboard");
       setTimeout(() => setCopiedKeyId(null), 2000);
     } catch (err) {
       console.error("Failed to copy:", err);
+      toast.error("Failed to copy API key");
     } finally {
       setCopyingKeyId(null);
     }
