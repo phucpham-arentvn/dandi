@@ -1,7 +1,8 @@
+import "./globals.css";
 import { Inter } from "next/font/google";
 import { Providers } from "./providers";
 import { Toaster } from "react-hot-toast";
-import "./globals.css";
+import NotificationsProvider from "./NotificationsProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -13,7 +14,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <NotificationsProvider />
+          {children}
+        </Providers>
         <Toaster
           position="top-right"
           toastOptions={{

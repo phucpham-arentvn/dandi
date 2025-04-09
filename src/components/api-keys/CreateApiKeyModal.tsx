@@ -149,7 +149,7 @@ export default function CreateApiKeyModal({
           )}
 
           <p className="text-sm text-gray-500 mt-2">
-            * If the combined usage of all your keys exceeds your plan's limit,
+            * If the combined usage of all your keys exceeds your plan limit,
             all requests will be rejected.
           </p>
         </div>
