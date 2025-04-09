@@ -28,6 +28,17 @@ export interface UpdateApiKeyRequest {
   enablePiiRestrictions?: boolean;
 }
 
+export interface CheckApiKeyResponse {
+  valid: boolean;
+  message?: string;
+  keyDetails?: {
+    type: "development" | "production";
+    name: string;
+    usage: number;
+    monthlyLimit?: number;
+  };
+}
+
 interface ErrorWithMessage {
   message: string;
 }
@@ -103,6 +114,50 @@ export const apiKeysApi = createApi({
       },
       invalidatesTags: ["ApiKey"],
     }),
+
+    // Check an API key
+    checkApiKey: builder.mutation<CheckApiKeyResponse, string>({
+      queryFn: async (apiKey) => {
+        try {
+          const { data, error } = await supabase
+            .from("api_keys")
+            .select("*")
+            .eq("key", apiKey)
+            .single();
+
+          if (error) {
+            return {
+              data: {
+                valid: false,
+                message: "Invalid API key",
+              },
+            };
+          }
+
+          return {
+            data: {
+              valid: true,
+              message: "API key is valid",
+              keyDetails: {
+                type: data.type,
+                name: data.name,
+                usage: data.usage || 0,
+                monthlyLimit: data.monthlyLimit,
+              },
+            },
+          };
+        } catch (error) {
+          console.error("Error checking API key:", error);
+          const err = error as ErrorWithMessage;
+          return {
+            data: {
+              valid: false,
+              message: err.message,
+            },
+          };
+        }
+      },
+    }),
   }),
 });
 
@@ -112,4 +167,5 @@ export const {
   useCreateApiKeyMutation,
   useUpdateApiKeyMutation,
   useDeleteApiKeyMutation,
+  useCheckApiKeyMutation,
 } = apiKeysApi;
