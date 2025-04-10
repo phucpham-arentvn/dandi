@@ -3,11 +3,15 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import { combineReducers } from "redux";
 import { apiKeysApi } from "./services/apiKeysApi";
+import { exampleApi } from "./services/exampleApi";
+import { userApi } from "./services/userApi";
 import { rtkQueryErrorMiddleware } from "./middleware/errorMiddleware";
 
 // Define the root reducer
 const rootReducer = combineReducers({
   [apiKeysApi.reducerPath]: apiKeysApi.reducer,
+  [exampleApi.reducerPath]: exampleApi.reducer,
+  [userApi.reducerPath]: userApi.reducer,
 });
 
 // Configure persist
@@ -29,6 +33,8 @@ export const store = configureStore({
       },
     })
       .concat(apiKeysApi.middleware)
+      .concat(exampleApi.middleware)
+      .concat(userApi.middleware)
       .concat(rtkQueryErrorMiddleware),
 });
 
