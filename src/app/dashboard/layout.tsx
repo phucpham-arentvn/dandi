@@ -1,3 +1,7 @@
+"use client";
+
+import { useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 
 export default function DashboardLayout({
@@ -5,6 +9,12 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { status } = useSession();
+
+  if (status === "unauthenticated") {
+    redirect("/auth/signin");
+  }
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
