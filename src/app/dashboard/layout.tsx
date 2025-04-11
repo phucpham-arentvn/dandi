@@ -1,18 +1,18 @@
-"use client";
-
-import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { authOptions } from "@/auth";
+import { getServerSession } from "next-auth/next";
+
 import Sidebar from "@/components/layout/Sidebar";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { status } = useSession();
+  const session = await getServerSession(authOptions);
 
-  if (status === "unauthenticated") {
-    redirect("/auth/signin");
+  if (!session) {
+    redirect("/authenticator/signin");
   }
 
   return (
