@@ -14,7 +14,7 @@ export default function UserProfile({ session }: UserProfileProps) {
     <div className="px-3 mb-6">
       <button
         popoverTarget="popover-1"
-        style={{ "--anchor-name": "--anchor-1" } as React.CSSProperties}
+        style={{ anchorName: "--anchor-1" } as React.CSSProperties}
         className="w-full flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-lg"
       >
         <div className="bg-blue-600 rounded-full flex items-center justify-center">
@@ -42,7 +42,7 @@ export default function UserProfile({ session }: UserProfileProps) {
         className="dropdown menu w-52 rounded-box bg-base-100 shadow-sm"
         popover="auto"
         id="popover-1"
-        style={{ "--position-anchor": "--anchor-1" } as React.CSSProperties}
+        style={{ positionAnchor: "--anchor-1" } as React.CSSProperties}
       >
         <li onClick={() => signOut()}>
           <a>
