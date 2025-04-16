@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import ApiDemo from "@/components/api-demo";
 
 export default function Home() {
   return (
@@ -652,6 +653,13 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* API Demo */}
+      <section className="py-16 bg-base-200">
+        <div className="container mx-auto px-4">
+          <ApiDemo />
         </div>
       </section>
 
