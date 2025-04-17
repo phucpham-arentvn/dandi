@@ -5,21 +5,22 @@ import Link from "next/link";
 import { Send, FileText, Copy, Check, ExternalLink } from "lucide-react";
 
 interface ApiResponse {
-  summary: string;
-  cool_facts: string[];
+  summary?: string;
+  cool_facts?: string[];
+  error?: string;
 }
 
 export default function ApiDemo() {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [requestUrl] = useState(
-    "https://dandi-chi.vercel.app/api/github-summarizer"
-  );
+  const [apiKey, setApiKey] = useState("");
+  const [requestUrl] = useState("/api/github-summarizer");
   const [githubUrl, setGithubUrl] = useState(
     "https://github.com/assafelovic/gpt-researcher"
   );
   const [activeTab, setActiveTab] = useState("body");
   const [responseTab, setResponseTab] = useState("pretty");
+  const [statusCode, setStatusCode] = useState<number>(0);
   const [response, setResponse] = useState<ApiResponse>({
     summary:
       "GPT Researcher is an autonomous agent designed for comprehensive online research on various tasks. It aims to produce detailed, factual, and unbiased research reports by leveraging AI technology. The project addresses issues of misinformation, speed, determinism, and reliability in research tasks.",
@@ -30,31 +31,35 @@ export default function ApiDemo() {
   });
 
   const handleSubmit = async () => {
+    if (!apiKey) {
+      setResponse({ error: "API key is required" });
+      setStatusCode(401);
+      return;
+    }
+
     setIsLoading(true);
+    try {
+      const response = await fetch(requestUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
+        body: JSON.stringify({ githubUrl }),
+      });
 
-    // Simulate API call
-    setTimeout(() => {
-      // This would be a real API call in production
-      // const response = await fetch(requestUrl, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ githubUrl })
-      // })
-      // const data = await response.json()
-
-      // For demo purposes, generate a simulated response based on the URL
-      const repoName = githubUrl.split("/").pop() || "";
-      const simulatedResponse = {
-        summary: `${repoName} is a powerful open-source project hosted on GitHub. It provides developers with tools and utilities to enhance their workflow and productivity. The repository contains well-structured code with comprehensive documentation.`,
-        cool_facts: [
-          `${repoName} has gained significant traction in the developer community, with contributions from developers across the globe.`,
-          `The average response time for issues in ${repoName} is approximately 48 hours, showing active maintenance.`,
-        ],
-      };
-
-      setResponse(simulatedResponse);
+      setStatusCode(response.status);
+      const data = await response.json();
+      setResponse(data);
+    } catch (error) {
+      console.error("Error:", error);
+      setResponse({
+        error: "Failed to fetch data. Please check your API key and try again.",
+      });
+      setStatusCode(500);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const copyToClipboard = () => {
@@ -65,6 +70,29 @@ export default function ApiDemo() {
 
   const formatJson = (json: ApiResponse) => {
     return JSON.stringify(json, null, 2);
+  };
+
+  const getStatusText = (status: number): string => {
+    switch (status) {
+      case 200:
+        return "OK";
+      case 201:
+        return "Created";
+      case 400:
+        return "Bad Request";
+      case 401:
+        return "Unauthorized";
+      case 403:
+        return "Forbidden";
+      case 404:
+        return "Not Found";
+      case 405:
+        return "Method Not Allowed";
+      case 500:
+        return "Internal Server Error";
+      default:
+        return "Unknown";
+    }
   };
 
   return (
@@ -164,7 +192,6 @@ export default function ApiDemo() {
                     type="text"
                     value={`"${githubUrl}"`}
                     onChange={(e) => {
-                      // Remove quotes if they're included
                       let value = e.target.value;
                       if (value.startsWith('"') && value.endsWith('"')) {
                         value = value.substring(1, value.length - 1);
@@ -175,6 +202,36 @@ export default function ApiDemo() {
                   />
                 </pre>
                 <pre className="whitespace-pre">{"}"}</pre>
+              </div>
+            </div>
+          )}
+
+          {/* Headers Tab Content */}
+          {activeTab === "headers" && (
+            <div className="p-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-black">
+                    x-api-key
+                  </label>
+                  <input
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="Enter your API key"
+                    className="input input-bordered w-full text-black placeholder-gray-500"
+                  />
+                </div>
+                <div className="font-mono text-sm bg-base-200 p-4 rounded-md">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-black/70">Content-Type:</div>
+                    <div className="text-black">application/json</div>
+                    <div className="text-black/70">x-api-key:</div>
+                    <div className="text-black">
+                      {apiKey ? "••••••••" : "<not set>"}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -201,7 +258,19 @@ export default function ApiDemo() {
                 </button>
               </div>
               <div className="flex items-center">
-                <span className="badge badge-success mr-2">200 OK</span>
+                {statusCode > 0 && (
+                  <span
+                    className={`badge mr-2 ${
+                      statusCode >= 200 && statusCode < 300
+                        ? "badge-success"
+                        : statusCode >= 400 && statusCode < 500
+                        ? "badge-warning"
+                        : "badge-error"
+                    }`}
+                  >
+                    {statusCode} {getStatusText(statusCode)}
+                  </span>
+                )}
                 <span className="text-sm text-base-content/70">~1.2s</span>
               </div>
             </div>
@@ -210,20 +279,32 @@ export default function ApiDemo() {
               {responseTab === "pretty" ? (
                 <div>
                   <div className="mb-4">
-                    <span className="text-primary-content/70">summary:</span>{" "}
-                    <span className="text-success">{response.summary}</span>,
+                    <span className="text-black/70">summary:</span>{" "}
+                    <span className="text-black">{response.summary}</span>
+                    {response.cool_facts &&
+                      response.cool_facts.length > 0 &&
+                      ","}
                   </div>
-                  <div>
-                    <span className="text-primary-content/70">cool_facts:</span>{" "}
-                    [
-                    {response.cool_facts.map((fact: string, index: number) => (
-                      <div key={index} className="pl-4">
-                        <span className="text-success">{fact}</span>
-                        {index < response.cool_facts.length - 1 ? "," : ""}
-                      </div>
-                    ))}
-                    ]
-                  </div>
+                  {response.cool_facts && response.cool_facts.length > 0 && (
+                    <div>
+                      <span className="text-black/70">cool_facts:</span> [
+                      {response.cool_facts.map(
+                        (fact: string, index: number) => (
+                          <div key={index} className="pl-4">
+                            <span className="text-black">{fact}</span>
+                            {index < response.cool_facts!.length - 1 ? "," : ""}
+                          </div>
+                        )
+                      )}
+                      ]
+                    </div>
+                  )}
+                  {response.error && (
+                    <div>
+                      <span className="text-black/70">error:</span>{" "}
+                      <span className="text-red-600">{response.error}</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <pre>{formatJson(response)}</pre>

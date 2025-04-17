@@ -22,7 +22,7 @@ async function validateApiKey(apiKey: string) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     // Get API key from header
     const apiKey = request.headers.get("x-api-key");
@@ -43,19 +43,20 @@ export async function GET(request: NextRequest) {
     }
 
     const body = await request.json();
+    const { githubUrl } = body;
 
-    if (!body) {
+    if (!githubUrl) {
       return NextResponse.json(
-        { error: "Query parameter is required" },
+        { error: "githubUrl is required" },
         { status: 400 }
       );
     }
 
-    // Call gpt-researcher API
+    // Call external API
     try {
       const response = await ky
         .post("https://dandi-chi.vercel.app/api/github-summarizer", {
-          body,
+          json: { githubUrl },
           headers: {
             "Content-Type": "application/json",
           },
@@ -74,9 +75,9 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json(response);
     } catch (error) {
-      console.error("Error calling gpt-researcher:", error);
+      console.error("Error calling external API:", error);
       return NextResponse.json(
-        { error: "Error calling gpt-researcher API" },
+        { error: "Error processing GitHub repository" },
         { status: 500 }
       );
     }
