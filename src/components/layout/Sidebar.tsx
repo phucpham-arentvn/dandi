@@ -11,7 +11,7 @@ import { Session } from "next-auth";
 import UserProfile from "./UserProfile";
 
 interface SidebarProps {
-  session: Session;
+  session?: Session;
 }
 
 export default function Sidebar(props: SidebarProps) {
@@ -24,7 +24,7 @@ export default function Sidebar(props: SidebarProps) {
       </div>
 
       {/* Personal Section */}
-      <UserProfile session={session} />
+      <UserProfile session?={session} />
 
       {/* Navigation */}
       <nav className="flex-1 px-3">
