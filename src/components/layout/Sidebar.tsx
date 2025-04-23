@@ -7,15 +7,9 @@ import {
   DocumentTextIcon,
   ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
-import { Session } from "next-auth";
 import UserProfile from "./UserProfile";
 
-interface SidebarProps {
-  session?: Session;
-}
-
-export default function Sidebar(props: SidebarProps) {
-  const { session } = props;
+export default function Sidebar() {
   return (
     <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col">
       {/* Logo */}
@@ -24,7 +18,7 @@ export default function Sidebar(props: SidebarProps) {
       </div>
 
       {/* Personal Section */}
-      <UserProfile session?={session} />
+      <UserProfile />
 
       {/* Navigation */}
       <nav className="flex-1 px-3">
